@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 import datetime
+import inspect
+import re
 import textwrap
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 import nextcord
 from nextcord.ext import commands
 
+import pie.acl
 from pie import i18n, logger, utils, check
+from pie.acl.database import ACDefault, ACLevel
 from pie.utils.objects import ConfirmView, ScrollableVotingEmbed, VotableEmbed
 
 
@@ -118,13 +122,45 @@ class ReviewEmbed(VotableEmbed):
             else "review teacher list"
         )
 
-        ctx = ACLContext(self.bot, interaction.user, interaction.guild, perm)
-        res = check.acl(ctx)
+        atx = ACLContext(
+            self.bot, interaction.user, interaction.guild, interaction.channel, perm
+        )
+        res = self.can_invoke_command(atx, perm)
         if not res:
             await interaction.response.send_message(
                 _(utx, "You don't have permissions to vote!"), ephemeral=True
             )
         return res
+
+    def get_hardcoded_ACLevel(self, command_function: Callable) -> Optional[ACLevel]:
+        """Return the ACLevel name of function's acl2 decorator."""
+        source = inspect.getsource(command_function)
+        match = re.search(r"acl2\(check\.ACLevel\.(.*)\)", source)
+        if not match:
+            return None
+        level = match.group(1)
+        return ACLevel[level]
+
+    def get_true_ACLevel(self, guild_id: int, command: str) -> Optional[ACLevel]:
+        default_overwrite = ACDefault.get(guild_id, command)
+        if default_overwrite:
+            level = default_overwrite.level
+        else:
+            command_obj = self.bot.get_command(command)
+            level = self.get_hardcoded_ACLevel(command_obj.callback)
+        return level
+
+    def can_invoke_command(self, ctx: commands.Context, command: str) -> bool:
+        """Check if given command is invokable by the user."""
+        command_level = self.get_true_ACLevel(ctx.guild.id, command)
+        if command_level is None:
+            return False
+
+        try:
+            pie.acl.acl2_function(ctx, command_level, for_command=command)
+            return True
+        except pie.exceptions.ACLFailure:
+            return False
 
 
 class Object(object):
@@ -142,11 +178,13 @@ class ACLContext:
         bot: commands.Bot,
         author: nextcord.Member,
         guild: nextcord.Guild,
+        channel: nextcord.GuildChannel,
         str_name: str,
     ):
         self.bot = bot
         self.author = author
         self.guild = guild
+        self.channel = channel
         self.command = Object()
         self.command.qualified_name = str_name
 
@@ -416,8 +454,9 @@ class Review(commands.Cog):
 
     # Commands
 
+    @commands.guild_only()
     @commands.cooldown(rate=5, per=60, type=commands.BucketType.user)
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @commands.group(name="review")
     async def review_(self, ctx):
         """Manage school reviews"""
@@ -425,13 +464,13 @@ class Review(commands.Cog):
 
     # SUBJECT REVIEW
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @review_.group(name="subject")
     async def review_subject_(self, ctx):
         """Manage subject reviews"""
         await utils.discord.send_help(ctx)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @review_subject_.command(name="list", aliases=["show", "see"])
     async def review_subject_list(self, ctx, abbreviation: str):
         """Show subject's reviews
@@ -459,7 +498,7 @@ class Review(commands.Cog):
         )
         await scrollable.scroll()
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @review_subject_.command(name="mine", aliases=["my-list", "mylist"])
     async def review_subject_mine(self, ctx):
         """Get list of all your reviewed subjects"""
@@ -486,7 +525,7 @@ class Review(commands.Cog):
 
         await ctx.reply(embed=embed)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @review_subject_.command(name="add", aliases=["update"])
     async def review_subject_add(
         self, ctx, abbreviation: str, grade: int, *, text: str
@@ -517,7 +556,7 @@ class Review(commands.Cog):
                 f"Review #{result.idx} for {abbreviation} added.",
             )
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @review_subject_.command(name="add-anonymous", aliases=["anonymous", "anon"])
     async def review_subject_add_anonymous(
         self, ctx, abbreviation: str, grade: int, *, text: str
@@ -548,7 +587,7 @@ class Review(commands.Cog):
                 f"Review #{result.idx} for {abbreviation} added.",
             )
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @review_subject_.command(name="remove")
     async def review_subject_remove(self, ctx, abbreviation: str):
         """Remove your subject review
@@ -597,13 +636,13 @@ class Review(commands.Cog):
         else:
             await ctx.send(_(ctx, "Deleting aborted."))
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @review_subject_.group(name="sudo")
     async def review_subject_sudo_(self, ctx):
         """Manage other user's subject reviews"""
         await utils.discord.send_help(ctx)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @review_subject_sudo_.command(name="remove")
     async def review_subject_sudo_remove(self, ctx, idx: int):
         """Remove someone's subject review
@@ -644,13 +683,13 @@ class Review(commands.Cog):
 
     # TEACHER REVIEW
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @review_.group(name="teacher")
     async def review_teacher_(self, ctx):
         """Manage teacher reviews"""
         await utils.discord.send_help(ctx)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @review_teacher_.command(name="list", aliases=["show", "see"])
     async def review_teacher_list(self, ctx, teacher_id: int):
         """Show teacher's reviews
@@ -678,7 +717,7 @@ class Review(commands.Cog):
         )
         await scrollable.scroll()
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @review_teacher_.command(name="mine", aliases=["my-list", "mylist"])
     async def review_teacher_mine(self, ctx):
         """Get list of all your reviewed teachers"""
@@ -705,7 +744,7 @@ class Review(commands.Cog):
 
         await ctx.reply(embed=embed)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @review_teacher_.command(name="add", aliases=["update"])
     async def review_teacher_add(self, ctx, teacher_id: int, grade: int, *, text: str):
         """Add or edit teacher review. If review was lastly
@@ -733,7 +772,7 @@ class Review(commands.Cog):
                 f"Review #{result.idx} for {result.teacher.name} added.",
             )
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @review_teacher_.command(name="add-anonymous", aliases=["anonymous", "anon"])
     async def review_teacher_add_anonymous(
         self, ctx, teacher_id: int, grade: int, *, text: str
@@ -763,7 +802,7 @@ class Review(commands.Cog):
                 f"Review #{result.idx} for {result.teacher.name} added.",
             )
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @review_teacher_.command(name="remove")
     async def review_teacher_remove(self, ctx, teacher_id: int):
         """Remove your teacher review
@@ -810,13 +849,13 @@ class Review(commands.Cog):
         else:
             await ctx.send(_(ctx, "Deleting aborted."))
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.SUBMOD)
     @review_teacher_.group(name="sudo")
     async def review_teacher_sudo_(self, ctx):
         """Manage other user's reviews"""
         await utils.discord.send_help(ctx)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.SUBMOD)
     @review_teacher_sudo_.command(name="remove")
     async def review_teacher_sudo_remove(self, ctx, idx: int):
         """Remove someone's teacher review

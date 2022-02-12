@@ -148,12 +148,13 @@ class School(commands.Cog):
 
     # SUBJECT COMMANDS
 
-    @commands.check(check.acl)
+    @commands.guild_only()
+    @check.acl2(check.ACLevel.MEMBER)
     @commands.group(name="subject")
     async def subject_(self, ctx):
         await utils.discord.send_help(ctx)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @subject_.command(name="info")
     async def subject_info(self, ctx, abbreviation):
         """Show subject informations
@@ -174,7 +175,7 @@ class School(commands.Cog):
 
         await ctx.reply(embed=embed)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @subject_.command(name="search", aliases=["list"])
     async def subject_search(self, ctx, *, name: str):
         """Search subject by name.
@@ -223,7 +224,7 @@ class School(commands.Cog):
         scrollable = utils.ScrollableEmbed(ctx, pages)
         await scrollable.scroll()
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MOD)
     @subject_.command(name="edit")
     async def subject_edit(self, ctx, abbreviation: str, *, parameters: str):
         """Edit existing subject.
@@ -325,7 +326,7 @@ class School(commands.Cog):
 
         await guild_log.info(ctx.author, ctx.channel, log_message)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MOD)
     @subject_.command(name="delete")
     async def subject_delete(self, ctx, abbreviation: str):
         """Delete subject.
@@ -369,12 +370,13 @@ class School(commands.Cog):
 
     # TEACHER COMMANDS
 
-    @commands.check(check.acl)
+    @commands.guild_only()
+    @check.acl2(check.ACLevel.MEMBER)
     @commands.group(name="teacher")
     async def teacher_(self, ctx):
         await utils.discord.send_help(ctx)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @teacher_.command(name="info")
     async def teacher_info(self, ctx, teacher_id: int):
         """Show teacher informations
@@ -394,7 +396,7 @@ class School(commands.Cog):
 
         await ctx.reply(embed=embed)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @teacher_.command(name="search", aliases=["list"])
     async def teacher_search(self, ctx, name):
         """Search teacher by name.
@@ -443,7 +445,7 @@ class School(commands.Cog):
         scrollable = utils.ScrollableEmbed(ctx, pages)
         await scrollable.scroll()
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MOD)
     @teacher_.command(name="edit")
     async def teacher_edit(self, ctx, id: int, *, name: str):
         """Edit existing teacher.
@@ -465,7 +467,7 @@ class School(commands.Cog):
 
         await guild_log.info(ctx.author, ctx.channel, f"Teacher {id} edited.")
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MOD)
     @teacher_.command(name="delete")
     async def teacher_delete(self, ctx, id: int):
         """Delete teacher.
@@ -501,12 +503,13 @@ class School(commands.Cog):
 
     # PROGRAM COMMANDS
 
-    @commands.check(check.acl)
+    @commands.guild_only()
+    @check.acl2(check.ACLevel.MEMBER)
     @commands.group(name="program")
     async def program_(self, ctx):
         await utils.discord.send_help(ctx)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @program_.command(name="info")
     async def program_info(self, ctx, degree: str, abbreviation: str):
         """Show program informations
@@ -539,7 +542,7 @@ class School(commands.Cog):
 
         await ctx.reply(embed=embed)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @program_.command(name="list", aliases=["search"])
     async def program_list(self, ctx, *, degree: str = None):
         """List programs"""
@@ -573,7 +576,7 @@ class School(commands.Cog):
 
         await ctx.reply(embed=embed)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MOD)
     @program_.command(name="edit")
     async def program_edit(
         self, ctx, degree: str, abbreviation: str, *, parameters: str
@@ -660,7 +663,7 @@ class School(commands.Cog):
 
         await guild_log.info(ctx.author, ctx.channel, log_message)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MOD)
     @program_.command(name="delete")
     async def program_delete(self, ctx, degree: str, abbreviation: str):
         """Delete program.
@@ -715,12 +718,12 @@ class School(commands.Cog):
         else:
             await ctx.send(_(ctx, "Deleting aborted."))
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MEMBER)
     @program_.group(name="subject")
     async def program_subject_(self, ctx):
         await utils.discord.send_help(ctx)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MOD)
     @program_subject_.command(name="add")
     async def program_subject_add(
         self,
@@ -744,7 +747,7 @@ class School(commands.Cog):
             ctx, degree, program_abbreviation, subject_abbreviation, year, obligation
         )
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MOD)
     @program_subject_.command(name="remove")
     async def program_subject_remove(
         self,
@@ -768,12 +771,12 @@ class School(commands.Cog):
             ctx, degree, program_abbreviation, subject_abbreviation, year, obligation
         )
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MOD)
     @subject_.group(name="program")
     async def subject_program(self, ctx):
         await utils.discord.send_help(ctx)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MOD)
     @subject_program.command(name="add")
     async def subject_program_add(
         self,
@@ -797,7 +800,7 @@ class School(commands.Cog):
             ctx, degree, program_abbreviation, subject_abbreviation, year, obligation
         )
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.MOD)
     @subject_program.command(name="remove")
     async def subject_program_remove(
         self,
@@ -823,12 +826,13 @@ class School(commands.Cog):
 
     # ALL DATA IMPORT
 
-    @commands.check(check.acl)
+    @commands.guild_only()
+    @check.acl2(check.ACLevel.GUILD_OWNER)
     @commands.group(name="school")
     async def school_(self, ctx):
         await utils.discord.send_help(ctx)
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.GUILD_OWNER)
     @school_.command(name="import")
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
     async def school_import(self, ctx):
@@ -857,7 +861,7 @@ class School(commands.Cog):
 
         await ctx.reply(_(ctx, "Processed records: {count}").format(count=count))
 
-    @commands.check(check.acl)
+    @check.acl2(check.ACLevel.GUILD_OWNER)
     @school_.command(name="export")
     async def school_export(self, ctx):
         """Export all school data"""
