@@ -518,7 +518,10 @@ class School(commands.Cog):
             degree: Program degree (B, M or D)
             abbreviation: Short name of program
         """
-        if degree and degree.upper() not in DEGREE_MAPPING:
+        degree = degree.upper()
+        abbreviation = abbreviation.upper()
+
+        if degree and degree not in DEGREE_MAPPING:
             await ctx.reply(
                 _(
                     ctx,
@@ -546,7 +549,9 @@ class School(commands.Cog):
     @program_.command(name="list", aliases=["search"])
     async def program_list(self, ctx, *, degree: str = None):
         """List programs"""
-        if degree and degree.upper() not in DEGREE_MAPPING:
+        degree = degree.upper() if degree is not None else None
+
+        if degree and degree not in DEGREE_MAPPING:
             ctx.reply(
                 _(
                     ctx,
@@ -673,6 +678,8 @@ class School(commands.Cog):
             abbreviation: Program abbreviation
         """
         degree = degree.upper()
+        abbreviation = abbreviation.upper()
+
         if degree not in DEGREE_MAPPING:
             await ctx.reply(
                 _(
