@@ -714,7 +714,7 @@ class School(commands.Cog):
             await ctx.send(
                 _(ctx, "Program {abbreviation} for degree {degree} deleted.").format(
                     abbreviation=abbreviation,
-                    degree=School._translate_degree(ctx, degree),
+                    degree=degree,
                 )
             )
             await guild_log.info(
