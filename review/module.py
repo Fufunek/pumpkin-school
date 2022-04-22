@@ -70,7 +70,7 @@ class ReviewEmbed(VotableEmbed):
 
         self.review.vote(interaction.user, True)
         await interaction.response.send_message(
-            _(utx, "Your positive vote has been casted."), ephemeral=True
+            _(utx, "Your positive vote has been counted."), ephemeral=True
         )
 
     async def vote_neutral(self, interaction: nextcord.Interaction):
@@ -98,7 +98,7 @@ class ReviewEmbed(VotableEmbed):
 
         self.review.vote(interaction.user, False)
         await interaction.response.send_message(
-            _(utx, "Your negative vote has been casted."), ephemeral=True
+            _(utx, "Your negative vote has been counted."), ephemeral=True
         )
 
     async def _is_author(
@@ -636,13 +636,13 @@ class Review(commands.Cog):
         else:
             await ctx.send(_(ctx, "Deleting aborted."))
 
-    @check.acl2(check.ACLevel.MEMBER)
+    @check.acl2(check.ACLevel.SUBMOD)
     @review_subject_.group(name="sudo")
     async def review_subject_sudo_(self, ctx):
         """Manage other user's subject reviews"""
         await utils.discord.send_help(ctx)
 
-    @check.acl2(check.ACLevel.MEMBER)
+    @check.acl2(check.ACLevel.SUBMOD)
     @review_subject_sudo_.command(name="remove")
     async def review_subject_sudo_remove(self, ctx, idx: int):
         """Remove someone's subject review

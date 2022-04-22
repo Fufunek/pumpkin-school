@@ -315,7 +315,7 @@ class School(commands.Cog):
 
         if teachers_remove and remove_ignore:
             message += "\n" + _(
-                ctx, "Can't remove teachers not teaching this subject: {teachers}"
+                ctx, "Can't remove teachers that don't teach this subject: {teachers}"
             ).format(teachers=", ".join(remove_ignore))
 
         await ctx.reply(message)
@@ -649,7 +649,7 @@ class School(commands.Cog):
                 await ctx.reply(
                     _(
                         ctx,
-                        "There's already program with abbreviation '{abbreviation}' and degree '{degree}'.",
+                        "A program with the abbreviation '{abbreviation}' and '{degree}' already exists.",
                     ).format(
                         abbreviation=check_abbreviation,
                         degree=School._translate_degree(ctx, check_degree),
@@ -848,7 +848,7 @@ class School(commands.Cog):
             await ctx.reply(_(ctx, "I'm expecting one JSON file."))
             return
         if not ctx.message.attachments[0].filename.lower().endswith("json"):
-            await ctx.reply(_(ctx, "You have to upload the JSON file."))
+            await ctx.reply(_(ctx, "You have to upload a JSON file."))
             return
         await ctx.reply(_(ctx, "Processing. Make a coffee, it may take a while."))
         async with ctx.typing():
