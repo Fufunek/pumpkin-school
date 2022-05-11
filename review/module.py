@@ -727,7 +727,10 @@ class Review(commands.Cog):
             return await ctx.reply(_(ctx, "You have no reviews."))
 
         teachers = sorted(
-            [f"{review.teacher.name} ({review.teacher.id})" for review in reviews]
+            [
+                f"{review.teacher.name} ({review.teacher.school_id})"
+                for review in reviews
+            ]
         )
 
         teachers = Review._split_list(teachers, 10)
